@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stick Collector</title>
+<style>
+:root{--bg:#101522;--panel:#192235;--panel2:#222f48;--text:#f4f7ff;--muted:#aebbd3;--accent:#7cf7c5;--gold:#ffd166;--danger:#ff6b7a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#253452 0,#101522 58%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+button,select{font:inherit}button{font-weight:750;border:0;border-radius:12px;padding:11px 16px;cursor:pointer;background:var(--accent);color:#112033;transition:transform .12s,filter .12s}button:hover{filter:brightness(1.06);transform:translateY(-1px)}button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.secondary{background:#33425f;color:var(--text)}.goldbtn{background:var(--gold);color:#352700}
+.wrap{max-width:1050px;margin:auto;padding:22px 16px 40px}.brand{text-align:center;margin-bottom:20px}.brand h1{font-size:clamp(2.3rem,7vw,4.2rem);margin:0;letter-spacing:-2px}.brand h1 span{color:var(--accent)}.brand p{margin:5px 0;color:var(--muted)}
+.panel{background:rgba(25,34,53,.95);border:1px solid #35435d;border-radius:20px;padding:20px;box-shadow:0 16px 40px #0003;margin-bottom:16px}.hidden{display:none!important}
+h2{margin:0 0 12px;font-size:1.3rem}.sub{color:var(--muted);font-size:.95rem}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.space{justify-content:space-between}.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:15px 0}.player-card,.skin-card{background:var(--panel2);border:1px solid #3a4b69;border-radius:15px;padding:14px}.player-card h3{margin:0 0 5px}
+.key{display:inline-block;padding:3px 7px;border-radius:6px;background:#101827;border:1px solid #50617e;font-size:.82rem;margin:2px}
+#arena{position:relative;width:100%;height:min(53vh,440px);min-height:290px;background:#111a29;border:2px solid #425270;border-radius:17px;overflow:hidden;margin:12px 0;touch-action:none}
+#arena:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#26334a66 1px,transparent 1px),linear-gradient(90deg,#26334a66 1px,transparent 1px);background-size:32px 32px;pointer-events:none}
+.stick{position:absolute;width:18px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;filter:drop-shadow(0 2px 4px #0008);z-index:2;user-select:none}
+.stick.normal{color:#f3f7ff}.stick.golden{color:var(--gold);font-size:27px}.stick.cursed{color:var(--danger);font-size:23px}.stick.swap{color:#67e8ff;font-size:27px}
+.player{position:absolute;width:31px;height:39px;z-index:3;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;filter:drop-shadow(0 3px 3px #0008)}
+.player .head{width:13px;height:13px;border-radius:50%;background:currentColor;border:2px solid #fff9}.player .body{width:7px;height:21px;border-radius:5px;background:currentColor;margin-top:2px}.player .legs{display:flex;gap:5px}.player .legs i{display:block;width:5px;height:9px;background:currentColor;border-radius:4px}
+.player .tag{position:absolute;bottom:44px;white-space:nowrap;font-size:11px;background:#0a101bd9;padding:3px 6px;border-radius:6px;color:#fff}
+.hud{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px}.hud-card{padding:10px 12px;background:#222f48;border-radius:12px;border:1px solid #3b4d6d}.hud-card strong{display:block;font-size:1.2rem}.hud-card small{color:var(--muted)}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-top:12px}.skin-card .swatch{height:42px;border-radius:10px;margin-bottom:10px;border:2px solid #ffffff55}.skin-card p{color:var(--muted);font-size:.88rem;margin:5px 0 12px}.skin-card button{width:100%;padding:9px}
+.notice{padding:12px 14px;border-radius:12px;background:#101827;color:var(--muted);margin-top:12px}.result{font-size:1.2rem;font-weight:800;color:var(--gold)}
+footer{text-align:center;color:#8290aa;font-size:.85rem;margin-top:20px}
+@media(max-width:540px){.panel{padding:14px}.wrap{padding:14px 10px 30px}#arena{min-height:260px}.brand h1{letter-spacing:-1px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="brand"><h1>STICK <span>COLLECTOR</span></h1><p>Grab sticks. Outsmart your friends. Own the arena.</p></header>
+
+<section id="menu" class="panel">
+  <h2>Choose your match</h2>
+  <p class="sub">Local multiplayer on one keyboard. Pick a player count, then start collecting.</p>
+  <div class="row">
+    <label for="playerCount">Players</label>
+    <select id="playerCount" style="background:#101827;color:white;border:1px solid #50617e;border-radius:10px;padding:10px">
+      <option value="2">2 players</option><option value="3">3 players</option><option value="4">4 players</option>
+    </select>
+    <button id="startBtn">Start match</button>
+    <button id="shopOpen" class="secondary">Skin shop</button>
+    <span class="sub">Coins: <strong id="coinCount">0</strong></span>
+  </div>
+  <div id="playerSetup" class="players"></div>
+  <div class="notice">Controls: P1 <span class="key">W A S D</span> · P2 <span class="key">↑ ↓ ← →</span> · P3 <span class="key">I J K L</span> · P4 <span class="key">T F G H</span></div>
+</section>
+
+<section id="gamePanel" class="panel hidden">
+  <div class="row space"><div><h2>Collect!</h2><p class="sub" style="margin:0">Move into sticks to collect them.</p></div><div class="row"><strong id="timer" style="font-size:1.7rem">60</strong><span class="sub">seconds</span><button id="quitBtn" class="secondary">Back to menu</button></div></div>
+  <div class="hud" id="hud"></div>
+  <div id="arena" aria-label="Game arena"></div>
+  <div class="notice">White stick = +1 · Gold star = +5 · Red skull = −5 · Cyan swap = swap scores with the next player.</div>
+</section>
+
+<section id="shopPanel" class="panel hidden">
+  <div class="row space"><div><h2>Skin shop</h2><p class="sub" style="margin:0">Unlock colors with coins earned from matches.</p></div><button id="shopClose" class="secondary">Back</button></div>
+  <p class="sub">Coins: <strong id="shopCoins">0</strong>. Skins are saved on this device only—no account needed.</p>
+  <div id="shopGrid" class="shop-grid"></div>
+</section>
+
+<section id="endPanel" class="panel hidden">
+  <h2>Match over!</h2><p id="winnerText" class="result"></p><p id="rewardText" class="sub"></p>
+  <div class="row"><button id="againBtn">Play again</button><button id="endMenuBtn" class="secondary">Main menu</button></div>
+</section>
+<footer>Stick Collector · Made for friendly competition</footer>
+</div>
+<script>
+(()=>{
+"use strict";
+const skins=[
+{name:"Classic Blue",color:"#63a4ff",cost:0},{name:"Mint",color:"#7cf7c5",cost:10},{name:"Sunshine",color:"#ffd166",cost:15},
+{name:"Hot Pink",color:"#ff70b8",cost:20},{name:"Violet",color:"#b69cff",cost:25},{name:"Fire Red",color:"#ff6b7a",cost:30},
+{name:"Ice Cyan",color:"#67e8ff",cost:35},{name:"Lime",color:"#c7f464",cost:40}
+];
+const controls=[
+{name:"Player 1",keys:"W A S D",up:"w",left:"a",down:"s",right:"d"},
+{name:"Player 2",keys:"↑ ← ↓ →",up:"arrowup",left:"arrowleft",down:"arrowdown",right:"arrowright"},
+{name:"Player 3",keys:"I J K L",up:"i",left:"j",down:"k",right:"l"},
+{name:"Player 4",keys:"T F G H",up:"t",left:"f",down:"g",right:"h"}
+];
+const $=id=>document.getElementById(id);
+let coins=Number(localStorage.getItem("sc_coins")||0);
+let unlocked=JSON.parse(localStorage.getItem("sc_unlocked")||"[0]");
+let equipped=JSON.parse(localStorage.getItem("sc_equipped")||"{}");
+let players=[],sticks=[],running=false,timeLeft=60,timerId=null,raf=0,last=0,selectedCount=2,shopPlayer=0;
+const arena=$("arena");
+function save(){localStorage.setItem("sc_coins",String(coins));localStorage.setItem("sc_unlocked",JSON.stringify(unlocked));localStorage.setItem("sc_equipped",JSON.stringify(equipped))}
+function skinFor(i){return skins[Number(equipped[i]||0)]||skins[0]}
+function refreshCoins(){$("coinCount").textContent=coins;$("shopCoins").textContent=coins}
+function setupCards(){
+ const n=Number($("playerCount").value);$("playerSetup").innerHTML="";
+ for(let i=0;i<n;i++){const s=skinFor(i),d=document.createElement("div");d.className="player-card";d.innerHTML=`<h3 style="color:${s.color}">${controls[i].name}</h3><div class="sub">Controls: ${controls[i].keys}</div><div class="sub">Equipped: ${s.name}</div>`;$("playerSetup").appendChild(d)}
+}
+function show(which){["menu","gamePanel","shopPanel","endPanel"].forEach(id=>$(id).classList.toggle("hidden",id!==which))}
+function renderShop(){
+ $("shopGrid").innerHTML="";
+ skins.forEach((s,index)=>{const own=unlocked.includes(index),d=document.createElement("div");d.className="skin-card";d.innerHTML=`<div class="swatch" style="background:${s.color}"></div><strong>${s.name}</strong><p>${s.cost===0?"Free":s.cost+" coins"}${own?" · Unlocked":""}</p><button ${(!own&&coins<s.cost)?"disabled":""} data-skin="${index}">${own?"Equip":"Unlock"}</button>`;d.querySelector("button").addEventListener("click",()=>{if(!unlocked.includes(index)){if(coins<s.cost)return;coins-=s.cost;unlocked.push(index)}equipped[shopPlayer]=index;save();refreshCoins();renderShop();setupCards()});$("shopGrid").appendChild(d)});
+}
+function openShop(){shopPlayer=0;renderShop();refreshCoins();show("shopPanel")}
+function rand(min,max){return Math.random()*(max-min)+min}
+function addStick(){if(sticks.length>=42)return;const r=Math.random();let type=r<.09?"golden":r<.17?"cursed":r<.23?"swap":"normal";sticks.push({x:rand(24,Math.max(25,arena.clientWidth-24)),y:rand(24,Math.max(25,arena.clientHeight-24)),type,id:Math.random().toString(36).slice(2),el:null})}
+function spawnPlayer(p){const el=document.createElement("div");el.className="player";el.innerHTML='<div class="tag"></div><div class="head"></div><div class="body"></div><div class="legs"><i></i><i></i></div>';el.style.color=p.color;el.querySelector(".tag").textContent=p.name;arena.appendChild(el);p.el=el;positionPlayer(p)}
+function positionPlayer(p){p.el.style.left=p.x+"px";p.el.style.top=p.y+"px"}
+function drawStick(s){const el=document.createElement("div");el.className="stick "+s.type;el.textContent=s.type==="normal"?"│":s.type==="golden"?"★":s.type==="cursed"?"☠":"⇄";el.style.left=(s.x-9)+"px";el.style.top=(s.y-20)+"px";arena.appendChild(el);s.el=el}
+function renderHUD(){ $("hud").innerHTML="";players.forEach(p=>{const d=document.createElement("div");d.className="hud-card";d.innerHTML=`<small style="color:${p.color}">${p.name}</small><strong>${p.score} points</strong><small>${p.collected} sticks collected</small>`;$("hud").appendChild(d)})}
+function start(){
+ stopLoops();selectedCount=Number($("playerCount").value);players=[];sticks=[];arena.innerHTML="";timeLeft=60;$("timer").textContent=timeLeft;
+ const w=arena.clientWidth||700,h=arena.clientHeight||340;
+ for(let i=0;i<selectedCount;i++){const s=skinFor(i);players.push({name:controls[i].name,color:s.color,score:0,collected:0,x:w*(.18+i*(.64/Math.max(1,selectedCount-1))),y:h*(i%2?.7:.3),el:null,keys:controls[i]});}
+ players.forEach(spawnPlayer);for(let i=0;i<30;i++)addStick();sticks.forEach(drawStick);renderHUD();show("gamePanel");running=true;last=performance.now();raf=requestAnimationFrame(loop);timerId=setInterval(()=>{if(!running)return;timeLeft--; $("timer").textContent=timeLeft;if(timeLeft<=0)finish()},1000);
+}
+function stopLoops(){running=false;if(timerId){clearInterval(timerId);timerId=null}if(raf)cancelAnimationFrame(raf);raf=0}
+const pressed=new Set();
+window.addEventListener("keydown",e=>{const k=e.key.toLowerCase();if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k))e.preventDefault();pressed.add(k)});
+window.addEventListener("keyup",e=>pressed.delete(e.key.toLowerCase()));
+function loop(now){
+ if(!running)return;const dt=Math.min((now-last)/1000,.04);last=now;const w=arena.clientWidth,h=arena.clientHeight;
+ players.forEach(p=>{const k=p.keys;let dx=0,dy=0;if(pressed.has(k.left))dx--;if(pressed.has(k.right))dx++;if(pressed.has(k.up))dy--;if(pressed.has(k.down))dy++;if(dx&&dy){dx*=.707;dy*=.707}p.x=Math.max(15,Math.min(w-15,p.x+dx*210*dt));p.y=Math.max(20,Math.min(h-20,p.y+dy*210*dt));positionPlayer(p)});
+ for(let i=sticks.length-1;i>=0;i--){const s=sticks[i];for(let j=0;j<players.length;j++){const p=players[j];if(Math.hypot(p.x-s.x,p.y-s.y)<24){collect(p,s,j);s.el.remove();sticks.splice(i,1);break}}}
+ while(sticks.length<30)addStick();
+ sticks.forEach(s=>{if(!s.el||!s.el.isConnected)drawStick(s)});
+ renderHUD();raf=requestAnimationFrame(loop);
+}
+function collect(p,s,index){
+ p.collected++;
+ if(s.type==="normal")p.score+=1;
+ if(s.type==="golden")p.score+=5;
+ if(s.type==="cursed")p.score=Math.max(0,p.score-5);
+ if(s.type==="swap"&&players.length>1){const other=players[(index+1)%players.length];[p.score,other.score]=[other.score,p.score]}
+}
+function finish(){
+ if(!running)return;stopLoops();const best=Math.max(...players.map(p=>p.score));const winners=players.filter(p=>p.score===best).map(p=>p.name);const reward=Math.max(3,Math.floor(best/2));coins+=reward;save();refreshCoins();$("winnerText").textContent=winners.length>1?"It's a tie! "+winners.join(" and ")+" win!":winners[0]+" wins with "+best+" points!";$("rewardText").textContent="Everyone played hard. You earned "+reward+" coins for this match.";show("endPanel");
+}
+function backToMenu(){stopLoops();show("menu");refreshCoins();setupCards()}
+$("playerCount").addEventListener("change",setupCards);
+$("startBtn").addEventListener("click",start);
+$("shopOpen").addEventListener("click",openShop);
+$("shopClose").addEventListener("click",()=>{show("menu");setupCards()});
+$("quitBtn").addEventListener("click",backToMenu);
+$("againBtn").addEventListener("click",start);
+$("endMenuBtn").addEventListener("click",backToMenu);
+window.addEventListener("resize",()=>{if(running){const w=arena.clientWidth,h=arena.clientHeight;players.forEach(p=>{p.x=Math.min(p.x,w-15);p.y=Math.min(p.y,h-20);positionPlayer(p)});sticks.forEach(s=>{s.x=Math.min(s.x,w-24);s.y=Math.min(s.y,h-24);if(s.el){s.el.style.left=(s.x-9)+"px";s.el.style.top=(s.y-20)+"px"}})}});
+refreshCoins();setupCards();
+})();
+</script>
+</body>
+</html>
